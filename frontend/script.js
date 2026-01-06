@@ -258,7 +258,13 @@ function deleteTask(taskId) {
 }
 
 // Drag and Drop Functions
+let draggedElement = null;
+let sourceQuadrant = null;
+
 function dragStart(e) {
+    draggedElement = e.target;
+    sourceQuadrant = e.target.closest('.quadrant');
+    
     e.target.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', e.target.innerHTML);
@@ -267,50 +273,117 @@ function dragStart(e) {
 
 function dragEnd(e) {
     e.target.classList.remove('dragging');
+    draggedElement = null;
+    sourceQuadrant = null;
+    
+    // Remove all drag-over classes
+    document.querySelectorAll('.drag-over').forEach(el => {
+        el.classList.remove('drag-over');
+    });
 }
 
 function allowDrop(e) {
     e.preventDefault();
-    e.currentTarget.classList.add('drag-over');
     e.dataTransfer.dropEffect = 'move';
+    
+    const quadrant = e.currentTarget;
+    const afterElement = getDragAfterElement(quadrant, e.clientY);
+    const dragging = document.querySelector('.dragging');
+    
+    if (afterElement == null) {
+        quadrant.appendChild(dragging);
+    } else {
+        quadrant.insertBefore(dragging, afterElement);
+    }
 }
 
 function dragLeave(e) {
-    e.currentTarget.classList.remove('drag-over');
+    if (e.target.classList.contains('quadrant')) {
+        e.target.classList.remove('drag-over');
+    }
 }
 
 function drop(e) {
     e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
+    e.stopPropagation();
+    
+    const quadrant = e.currentTarget;
+    quadrant.classList.remove('drag-over');
     
     const taskId = e.dataTransfer.getData('taskId');
-    const newQuadrant = parseInt(e.currentTarget.dataset.quadrant);
+    const newQuadrant = parseInt(quadrant.dataset.quadrant);
     
     if (!taskId || !newQuadrant) return;
     
     const task = StorageManager.getTask(taskId);
     if (!task) return;
     
-    // Update urgent/important based on quadrant
-    let updates = { quadrant: newQuadrant };
+    const oldQuadrant = task.quadrant;
     
-    if (newQuadrant === 1) {
-        updates.urgent = true;
-        updates.important = true;
-    } else if (newQuadrant === 2) {
-        updates.urgent = true;
-        updates.important = false;
-    } else if (newQuadrant === 3) {
-        updates.urgent = false;
-        updates.important = true;
-    } else if (newQuadrant === 4) {
-        updates.urgent = false;
-        updates.important = false;
+    // Check if we moved to a different quadrant
+    if (oldQuadrant !== newQuadrant) {
+        // Update urgent/important based on quadrant
+        let updates = { quadrant: newQuadrant };
+        
+        if (newQuadrant === 1) {
+            updates.urgent = true;
+            updates.important = true;
+        } else if (newQuadrant === 2) {
+            updates.urgent = true;
+            updates.important = false;
+        } else if (newQuadrant === 3) {
+            updates.urgent = false;
+            updates.important = true;
+        } else if (newQuadrant === 4) {
+            updates.urgent = false;
+            updates.important = false;
+        }
+        
+        StorageManager.updateTask(taskId, updates);
+        showNotification('Task moved to different quadrant!', 'success');
     }
     
-    StorageManager.updateTask(taskId, updates);
-    loadTasks();
-    showNotification('Task moved successfully!', 'success');
+    // Save the new order of tasks
+    saveTaskOrder();
+}
+
+function getDragAfterElement(quadrant, y) {
+    const draggableElements = [...quadrant.querySelectorAll('.task-card:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function saveTaskOrder() {
+    const allTasks = StorageManager.loadTasks();
+    const taskMap = {};
+    allTasks.forEach(task => {
+        taskMap[task.id] = task;
+    });
+    
+    const orderedTaskIds = [];
+    
+    // Go through each quadrant in order and collect task IDs
+    for (let i = 1; i <= 4; i++) {
+        const quadrant = document.getElementById(`quadrant-${i}`);
+        const taskCards = quadrant.querySelectorAll('.task-card');
+        
+        taskCards.forEach(card => {
+            orderedTaskIds.push(card.dataset.taskId);
+        });
+    }
+    
+    // Reorder tasks array based on DOM order
+    const orderedTasks = orderedTaskIds.map(id => taskMap[id]).filter(Boolean);
+    StorageManager.saveTasks(orderedTasks);
 }
 
 // Export/Import Functions

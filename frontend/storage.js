@@ -181,5 +181,28 @@ const StorageManager = {
     // Get task count
     getTaskCount: function() {
         return this.loadTasks().length;
+    },
+
+    // Reorder tasks (for drag and drop within quadrant)
+    reorderTasks: function(taskIds) {
+        const tasks = this.loadTasks();
+        
+        // Create a map of current tasks
+        const taskMap = {};
+        tasks.forEach(task => {
+            taskMap[task.id] = task;
+        });
+        
+        // Create new ordered array
+        const orderedTasks = taskIds.map(id => taskMap[id]).filter(Boolean);
+        
+        // Add any tasks that weren't in the order (shouldn't happen, but safety)
+        tasks.forEach(task => {
+            if (!taskIds.includes(task.id)) {
+                orderedTasks.push(task);
+            }
+        });
+        
+        return this.saveTasks(orderedTasks);
     }
 };
