@@ -3,11 +3,5 @@
   "installCommand": "echo 'No install needed'",
   "outputDirectory": ".",
   "framework": null,
-  "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "cleanUrls": true
 }
