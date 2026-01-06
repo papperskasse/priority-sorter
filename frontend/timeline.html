@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline View - Priority Sorter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 3px solid;
+            background: white;
+        }
+        .timeline-overdue::before { border-color: #ef4444; }
+        .timeline-today::before { border-color: #f59e0b; }
+        .timeline-thisweek::before { border-color: #3b82f6; }
+        .timeline-later::before { border-color: #9ca3af; }
+        .timeline-none::before { border-color: #d1d5db; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-4 shadow-lg">
+        <div class="container mx-auto">
+            <h1 class="text-3xl font-bold mb-1">📅 Timeline View</h1>
+            <p class="text-blue-100 text-sm">Task deadlines in chronological order</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+        <!-- Navigation -->
+        <div class="flex gap-3 mb-6">
+            <a href="index.html" class="inline-flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-colors shadow">
+                ← Back to Matrix
+            </a>
+            <button onclick="location.reload()" class="inline-flex items-center gap-2 bg-white text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-semibold transition-colors shadow">
+                🔄 Refresh
+            </button>
+        </div>
+
+        <!-- Legend -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <h3 class="font-bold text-gray-800 mb-3">Timeline Legend</h3>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded-full border-3 border-red-500"></div>
+                    <span>Overdue</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded-full border-3 border-orange-500"></div>
+                    <span>Today</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded-full border-3 border-blue-500"></div>
+                    <span>This Week</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded-full border-3 border-gray-500"></div>
+                    <span>Later</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded-full border-3 border-gray-300"></div>
+                    <span>No Date</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Groups -->
+        <div id="timelineContent">
+            <!-- Content loaded dynamically -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden bg-white rounded-lg shadow-md p-12 text-center">
+            <p class="text-4xl mb-4">📅</p>
+            <p class="text-xl text-gray-800 font-semibold mb-2">No Tasks with Dates</p>
+            <p class="text-gray-600 mb-4">Add deadline information in the "When" field when editing tasks</p>
+            <a href="index.html" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors">
+                Go to Matrix
+            </a>
+        </div>
+    </div>
+
+    <script src="storage.js"></script>
+    <script>
+        // Load and display timeline
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTimeline();
+        });
+
+        function loadTimeline() {
+            const tasks = StorageManager.loadTasks();
+            
+            // Parse and categorize tasks
+            const categorized = {
+                overdue: [],
+                today: [],
+                thisWeek: [],
+                later: [],
+                noDate: []
+            };
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const weekFromNow = new Date(today);
+            weekFromNow.setDate(weekFromNow.getDate() + 7);
+
+            tasks.forEach(task => {
+                const whenText = task.notes?.when || '';
+                const parsedDate = parseDate(whenText);
+                
+                const item = {
+                    task: task,
+                    dateText: whenText,
+                    parsedDate: parsedDate
+                };
+
+                if (!parsedDate) {
+                    categorized.noDate.push(item);
+                } else if (parsedDate < today) {
+                    categorized.overdue.push(item);
+                } else if (parsedDate.getTime() === today.getTime()) {
+                    categorized.today.push(item);
+                } else if (parsedDate < weekFromNow) {
+                    categorized.thisWeek.push(item);
+                } else {
+                    categorized.later.push(item);
+                }
+            });
+
+            // Sort each category by date
+            ['overdue', 'today', 'thisWeek', 'later'].forEach(cat => {
+                categorized[cat].sort((a, b) => a.parsedDate - b.parsedDate);
+            });
+
+            // Display timeline
+            const content = document.getElementById('timelineContent');
+            const emptyState = document.getElementById('emptyState');
+            
+            const hasAnyDates = categorized.overdue.length + categorized.today.length + 
+                               categorized.thisWeek.length + categorized.later.length > 0;
+
+            if (!hasAnyDates && categorized.noDate.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            let html = '';
+
+            // Overdue
+            if (categorized.overdue.length > 0) {
+                html += renderTimelineGroup('🚨 Overdue', categorized.overdue, 'overdue', 'red');
+            }
+
+            // Today
+            if (categorized.today.length > 0) {
+                html += renderTimelineGroup('⏰ Today', categorized.today, 'today', 'orange');
+            }
+
+            // This Week
+            if (categorized.thisWeek.length > 0) {
+                html += renderTimelineGroup('📅 This Week', categorized.thisWeek, 'thisweek', 'blue');
+            }
+
+            // Later
+            if (categorized.later.length > 0) {
+                html += renderTimelineGroup('🔮 Later', categorized.later, 'later', 'gray');
+            }
+
+            // No Date
+            if (categorized.noDate.length > 0) {
+                html += renderTimelineGroup('❓ No Deadline Set', categorized.noDate, 'none', 'gray');
+            }
+
+            content.innerHTML = html;
+        }
+
+        function renderTimelineGroup(title, items, category, color) {
+            const quadrantNames = {
+                1: '🔴 Do First',
+                2: '🟠 Delegate',
+                3: '🔵 Schedule',
+                4: '⚪ Eliminate'
+            };
+
+            let html = `
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">${title}</h2>
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <div class="relative border-l-2 border-${color}-200 ml-2 space-y-4">
+            `;
+
+            items.forEach(item => {
+                const task = item.task;
+                const dateDisplay = item.parsedDate 
+                    ? item.parsedDate.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+                    : 'No specific date';
+
+                html += `
+                    <div class="relative pl-6 timeline-item timeline-${category}">
+                        <div class="mb-1">
+                            <a href="edit-task.html?id=${task.id}" class="text-base font-semibold text-gray-800 hover:text-blue-600">
+                                ${escapeHtml(task.title)}
+                            </a>
+                            <span class="ml-2 text-xs px-2 py-1 rounded ${getQuadrantColor(task.quadrant)}">
+                                ${quadrantNames[task.quadrant]}
+                            </span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <p><strong>📅 When:</strong> ${escapeHtml(item.dateText || 'Not specified')}</p>
+                            ${dateDisplay !== 'No specific date' ? `<p class="text-xs text-gray-500 mt-1">Parsed as: ${dateDisplay}</p>` : ''}
+                        </div>
+                        ${task.notes?.why ? `<p class="text-xs text-gray-600 mt-2"><strong>Why:</strong> ${escapeHtml(task.notes.why.substring(0, 100))}${task.notes.why.length > 100 ? '...' : ''}</p>` : ''}
+                        <div class="mt-2 flex gap-2">
+                            <a href="edit-task.html?id=${task.id}" class="text-xs text-blue-600 hover:text-blue-800">✏️ Edit</a>
+                            <button onclick="showQuickView('${task.id}')" class="text-xs text-blue-600 hover:text-blue-800">👁️ View Details</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return html;
+        }
+
+        function parseDate(text) {
+            if (!text || text.trim() === '') return null;
+
+            const cleaned = text.toLowerCase().trim();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Today/Tomorrow patterns
+            if (/\b(today|idag)\b/.test(cleaned)) return new Date(today);
+            if (/\b(tomorrow|imorgon)\b/.test(cleaned)) {
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                return tomorrow;
+            }
+
+            // Try parsing common date formats
+            // ISO format: YYYY-MM-DD
+            let match = cleaned.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (match) return new Date(match[1], match[2] - 1, match[3]);
+
+            // European format: DD/MM/YYYY or DD.MM.YYYY
+            match = cleaned.match(/(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{4})/);
+            if (match) return new Date(match[3], match[2] - 1, match[1]);
+
+            // Month name patterns (Jan, January, etc.)
+            match = text.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})/i);
+            if (match) {
+                const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+                const monthIndex = months.findIndex(m => match[1].toLowerCase().startsWith(m));
+                if (monthIndex >= 0) {
+                    const year = today.getFullYear();
+                    const date = new Date(year, monthIndex, parseInt(match[2]));
+                    if (date < today) date.setFullYear(year + 1); // Next year if past
+                    return date;
+                }
+            }
+
+            // Relative dates (in X days/weeks)
+            match = cleaned.match(/in\s+(\d+)\s+(day|week|month)/);
+            if (match) {
+                const num = parseInt(match[1]);
+                const unit = match[2];
+                const date = new Date(today);
+                if (unit === 'day') date.setDate(date.getDate() + num);
+                else if (unit === 'week') date.setDate(date.getDate() + (num * 7));
+                else if (unit === 'month') date.setMonth(date.getMonth() + num);
+                return date;
+            }
+
+            // Quarter patterns (Q1 2026, etc.)
+            match = text.match(/Q([1-4])\s+(\d{4})/i);
+            if (match) {
+                const quarter = parseInt(match[1]);
+                const year = parseInt(match[2]);
+                const month = (quarter - 1) * 3; // Start of quarter
+                return new Date(year, month, 1);
+            }
+
+            return null; // Couldn't parse
+        }
+
+        function getQuadrantColor(quadrant) {
+            const colors = {
+                1: 'bg-red-100 text-red-800',
+                2: 'bg-orange-100 text-orange-800',
+                3: 'bg-blue-100 text-blue-800',
+                4: 'bg-gray-100 text-gray-800'
+            };
+            return colors[quadrant] || colors[4];
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function showQuickView(taskId) {
+            // Redirect to main page with modal
+            window.location.href = `index.html#view-${taskId}`;
+        }
+    </script>
+</body>
+</html>
