@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Task - Priority Sorter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-4 shadow-lg">
+        <div class="container mx-auto">
+            <h1 class="text-3xl font-bold">✏️ Edit Task</h1>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+        <!-- Back Button -->
+        <a href="index.html" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold mb-4">
+            ← Back to Matrix
+        </a>
+
+        <!-- Edit Form -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <form id="editForm" onsubmit="saveTask(event)">
+                <!-- Basic Info -->
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📋 Basic Information</h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Task Title <span class="text-red-500">*</span></label>
+                        <input 
+                            type="text" 
+                            id="title" 
+                            required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <div class="flex gap-4 mb-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="urgent" class="w-5 h-5 text-blue-600 rounded">
+                            <span class="text-gray-700 font-medium">🔥 Urgent</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="important" class="w-5 h-5 text-blue-600 rounded">
+                            <span class="text-gray-700 font-medium">⭐ Important</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Detailed Notes -->
+                <div class="border-t pt-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📝 Detailed Planning</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">❓ Why (Purpose & Motivation)</label>
+                            <textarea 
+                                id="why" 
+                                rows="3" 
+                                placeholder="Why is this task important? What's the purpose?"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            ></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">🔧 How (Method & Approach)</label>
+                            <textarea 
+                                id="how" 
+                                rows="3" 
+                                placeholder="How will you accomplish this? What's the method?"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            ></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">📅 When (Timing & Deadline)</label>
+                            <input 
+                                type="text" 
+                                id="when" 
+                                placeholder="When will you do this? Any deadlines?"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">👥 With Whom (People & Resources)</label>
+                            <input 
+                                type="text" 
+                                id="with_whom" 
+                                placeholder="Who will help? Who's involved?"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">📦 Subtasks & Breakdown</label>
+                            <textarea 
+                                id="subtasks" 
+                                rows="5" 
+                                placeholder="Break this task into smaller steps:&#10;1. First step&#10;2. Second step&#10;3. Third step..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                            ></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Tip: Number your subtasks for clarity</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">💭 Additional Notes</label>
+                            <textarea 
+                                id="additional" 
+                                rows="4" 
+                                placeholder="Any other details, thoughts, or context..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            ></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 pt-4 border-t">
+                    <button 
+                        type="submit"
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                    >
+                        💾 Save Changes
+                    </button>
+                    <a 
+                        href="index.html"
+                        class="flex-1 text-center bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg font-semibold transition-colors"
+                    >
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Task Info -->
+        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-gray-700">
+            <p><strong>📊 Current Quadrant:</strong> <span id="currentQuadrant">Loading...</span></p>
+            <p class="mt-1"><strong>📅 Created:</strong> <span id="createdDate">Loading...</span></p>
+        </div>
+    </div>
+
+    <script src="storage.js"></script>
+    <script>
+        let taskId = null;
+
+        // Get task ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        taskId = urlParams.get('id');
+
+        if (!taskId) {
+            alert('No task specified!');
+            window.location.href = 'index.html';
+        }
+
+        // Load task data
+        document.addEventListener('DOMContentLoaded', () => {
+            const task = StorageManager.getTask(taskId);
+            
+            if (!task) {
+                alert('Task not found!');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Populate form
+            document.getElementById('title').value = task.title;
+            document.getElementById('urgent').checked = task.urgent;
+            document.getElementById('important').checked = task.important;
+            document.getElementById('why').value = task.notes.why || '';
+            document.getElementById('how').value = task.notes.how || '';
+            document.getElementById('when').value = task.notes.when || '';
+            document.getElementById('with_whom').value = task.notes.with_whom || '';
+            
+            // Check if additional notes contains subtasks or is general notes
+            const additional = task.notes.additional || '';
+            if (additional.match(/^\d+\./m)) {
+                // Looks like subtasks
+                document.getElementById('subtasks').value = additional;
+                document.getElementById('additional').value = '';
+            } else {
+                document.getElementById('subtasks').value = '';
+                document.getElementById('additional').value = additional;
+            }
+
+            // Show current quadrant
+            const quadrantNames = {
+                1: '🔴 Do First (Urgent & Important)',
+                2: '🟠 Delegate (Urgent)',
+                3: '🔵 Schedule (Important)',
+                4: '⚪ Eliminate'
+            };
+            document.getElementById('currentQuadrant').textContent = quadrantNames[task.quadrant] || 'Unknown';
+            document.getElementById('createdDate').textContent = new Date(task.created_at).toLocaleString();
+        });
+
+        // Save task
+        function saveTask(event) {
+            event.preventDefault();
+
+            const title = document.getElementById('title').value.trim();
+            if (!title) {
+                alert('Task title is required!');
+                return;
+            }
+
+            const urgent = document.getElementById('urgent').checked;
+            const important = document.getElementById('important').checked;
+
+            // Calculate new quadrant
+            let quadrant;
+            if (urgent && important) {
+                quadrant = 1;
+            } else if (urgent && !important) {
+                quadrant = 2;
+            } else if (!urgent && important) {
+                quadrant = 3;
+            } else {
+                quadrant = 4;
+            }
+
+            // Combine subtasks and additional notes
+            const subtasks = document.getElementById('subtasks').value.trim();
+            const additionalNotes = document.getElementById('additional').value.trim();
+            const combinedAdditional = [subtasks, additionalNotes].filter(Boolean).join('\n\n');
+
+            const updates = {
+                title: title,
+                urgent: urgent,
+                important: important,
+                quadrant: quadrant,
+                notes: {
+                    why: document.getElementById('why').value.trim(),
+                    how: document.getElementById('how').value.trim(),
+                    when: document.getElementById('when').value.trim(),
+                    with_whom: document.getElementById('with_whom').value.trim(),
+                    additional: combinedAdditional
+                }
+            };
+
+            StorageManager.updateTask(taskId, updates);
+            
+            // Show success message
+            alert('✅ Task updated successfully!');
+            
+            // Return to main page
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

@@ -91,7 +91,7 @@ function addTaskToDOM(task) {
     const quadrant = document.getElementById(`quadrant-${task.quadrant}`);
     
     const taskCard = document.createElement('div');
-    taskCard.className = 'task-card bg-white border-2 border-gray-200 rounded-lg p-4 cursor-move shadow-sm';
+    taskCard.className = 'task-card bg-white border border-gray-200 rounded-md p-2 cursor-move shadow-sm';
     taskCard.draggable = true;
     taskCard.dataset.taskId = task.id;
     
@@ -102,47 +102,26 @@ function addTaskToDOM(task) {
     );
     
     taskCard.innerHTML = `
-        <div class="flex justify-between items-start mb-2">
-            <h4 class="font-semibold text-gray-800 flex-1">${escapeHtml(task.title)}</h4>
-            <div class="flex gap-1 ml-2">
-                <button 
-                    onclick="editTask('${task.id}')" 
-                    class="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+        <div class="flex justify-between items-center gap-2">
+            <h4 class="text-sm font-medium text-gray-800 flex-1 truncate">${escapeHtml(task.title)}</h4>
+            <div class="flex gap-1 flex-shrink-0">
+                <a 
+                    href="edit-task.html?id=${task.id}" 
+                    class="text-blue-600 hover:text-blue-800 text-xs"
                     title="Edit task"
                 >
                     ✏️
-                </button>
+                </a>
                 <button 
                     onclick="deleteTask('${task.id}')" 
-                    class="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                    class="text-red-600 hover:text-red-800 text-xs"
                     title="Delete task"
                 >
                     🗑️
                 </button>
             </div>
         </div>
-        <div class="flex gap-2 text-xs mb-2">
-            ${task.urgent ? '<span class="bg-red-100 text-red-800 px-2 py-1 rounded">🔥 Urgent</span>' : ''}
-            ${task.important ? '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">⭐ Important</span>' : ''}
-        </div>
-        <div class="text-xs text-gray-500">
-            Created: ${new Date(task.created_at).toLocaleDateString()}
-        </div>
-        ${hasNotes ? `
-            <button 
-                onclick="toggleNotes('${task.id}')" 
-                class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
-            >
-                📝 View Notes ▼
-            </button>
-            <div id="notes-${task.id}" class="notes-section mt-2 space-y-2 text-sm">
-                ${task.notes.why ? `<div><strong class="text-gray-700">❓ Why:</strong> <p class="text-gray-600 mt-1">${escapeHtml(task.notes.why)}</p></div>` : ''}
-                ${task.notes.how ? `<div><strong class="text-gray-700">🔧 How:</strong> <p class="text-gray-600 mt-1">${escapeHtml(task.notes.how)}</p></div>` : ''}
-                ${task.notes.when ? `<div><strong class="text-gray-700">📅 When:</strong> <p class="text-gray-600 mt-1">${escapeHtml(task.notes.when)}</p></div>` : ''}
-                ${task.notes.with_whom ? `<div><strong class="text-gray-700">👥 With Whom:</strong> <p class="text-gray-600 mt-1">${escapeHtml(task.notes.with_whom)}</p></div>` : ''}
-                ${task.notes.additional ? `<div><strong class="text-gray-700">💭 Additional:</strong> <p class="text-gray-600 mt-1">${escapeHtml(task.notes.additional)}</p></div>` : ''}
-            </div>
-        ` : ''}
+        ${hasNotes ? `<div class="text-xs text-gray-500 mt-1">📝 Has notes</div>` : ''}
     `;
     
     // Add drag event listeners
