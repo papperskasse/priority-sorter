@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTasks();
     setupEventListeners();
     updateTaskCount();
+    
+    // Check if user has dismissed tips banner
+    if (localStorage.getItem('hideTips') === 'true') {
+        const tipsBanner = document.getElementById('tipsBanner');
+        if (tipsBanner) tipsBanner.style.display = 'none';
+    }
 });
 
 // Setup event listeners
