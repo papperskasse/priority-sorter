@@ -169,6 +169,83 @@ const StorageManager = {
         reader.readAsText(file);
     },
 
+    // Import tasks from CSV file
+    importFromCSV: function(file, merge = false) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            try {
+                const csvText = e.target.result;
+                const lines = csvText.split('\n');
+                
+                if (lines.length < 2) {
+                    showNotification('CSV file is empty or invalid', 'error');
+                    return;
+                }
+                
+                // Skip header line
+                const importedTasks = [];
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    // Parse CSV line (handle quoted fields)
+                    const fields = parseCSVLine(line);
+                    
+                    if (fields.length < 4) continue; // Need at least quadrant, title, urgent, important
+                    
+                    // Extract quadrant number from text like "Do First (Urgent & Important)"
+                    let quadrant = 1;
+                    if (fields[0].includes('Delegate')) quadrant = 2;
+                    else if (fields[0].includes('Schedule')) quadrant = 3;
+                    else if (fields[0].includes('Eliminate')) quadrant = 4;
+                    
+                    const task = {
+                        id: 'task-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                        title: fields[1] || 'Untitled Task',
+                        urgent: fields[2] === 'Yes',
+                        important: fields[3] === 'Yes',
+                        notes: {
+                            why: fields[4] || '',
+                            how: fields[5] || '',
+                            when: fields[6] || '',
+                            with_whom: fields[7] || '',
+                            additional: fields[8] || ''
+                        },
+                        created_at: new Date().toISOString(),
+                        quadrant: quadrant
+                    };
+                    
+                    importedTasks.push(task);
+                }
+                
+                if (importedTasks.length === 0) {
+                    showNotification('No valid tasks found in CSV', 'warning');
+                    return;
+                }
+                
+                let finalTasks;
+                if (merge) {
+                    const existingTasks = StorageManager.loadTasks();
+                    finalTasks = [...existingTasks, ...importedTasks];
+                    showNotification(`Imported ${importedTasks.length} tasks from CSV (merged)`, 'success');
+                } else {
+                    finalTasks = importedTasks;
+                    showNotification(`Imported ${importedTasks.length} tasks from CSV (replaced all)`, 'success');
+                }
+                
+                StorageManager.saveTasks(finalTasks);
+                loadTasks();
+            } catch (error) {
+                console.error('CSV Import error:', error);
+                showNotification('Error importing CSV file. Please check the format.', 'error');
+            }
+        };
+        
+        reader.readAsText(file);
+    },
+
     // Clear all tasks (with confirmation)
     clearAll: function() {
         if (confirm('⚠️ Are you sure you want to delete ALL tasks? This cannot be undone!\n\nTip: Export your tasks first as a backup.')) {

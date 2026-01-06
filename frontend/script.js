@@ -404,7 +404,13 @@ function handleFileImport(event) {
     if (!file) return;
     
     const merge = confirm('Do you want to MERGE with existing tasks?\n\nClick OK to merge, or Cancel to REPLACE all tasks.');
-    StorageManager.importTasks(file, merge);
+    
+    // Check file type
+    if (file.name.endsWith('.csv')) {
+        StorageManager.importFromCSV(file, merge);
+    } else {
+        StorageManager.importTasks(file, merge);
+    }
     
     // Reset file input
     event.target.value = '';
@@ -466,6 +472,40 @@ document.getElementById('editModal')?.addEventListener('click', (e) => {
         closeEditModal();
     }
 });
+
+// Parse CSV line handling quoted fields
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        
+        if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            result.push(current);
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    
+    result.push(current);
+    return result;
+}
+
+// Toggle info panel
+function toggleInfo() {
+    const infoPanel = document.getElementById('infoPanel');
+    infoPanel.classList.toggle('hidden');
+}
 
 // Log storage info
 console.log('🎯 Priority Sorter - Browser Storage Mode');

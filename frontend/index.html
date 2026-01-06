@@ -53,6 +53,108 @@
 
     <!-- Main Container -->
     <div class="container mx-auto px-4 py-8">
+        <!-- Info Panel -->
+        <div id="infoPanel" class="hidden bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-blue-900">📚 Export/Import & Privacy Information</h3>
+                <button onclick="toggleInfo()" class="text-blue-600 hover:text-blue-800 text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div class="space-y-4 text-gray-700">
+                <!-- Privacy Section -->
+                <div class="bg-white rounded-lg p-4 border-l-4 border-green-500">
+                    <h4 class="font-bold text-green-800 mb-2">🔒 Your Privacy is Protected</h4>
+                    <ul class="text-sm space-y-1 ml-4">
+                        <li>✅ All tasks are stored <strong>only in your browser</strong> (localStorage)</li>
+                        <li>✅ No data is ever sent to any server</li>
+                        <li>✅ No login, no tracking, no analytics</li>
+                        <li>✅ Each person has their own private task list</li>
+                        <li>✅ Data never leaves your device unless you export it</li>
+                    </ul>
+                </div>
+
+                <!-- Export Section -->
+                <div class="bg-white rounded-lg p-4">
+                    <h4 class="font-bold text-gray-800 mb-2">💾 Export Options</h4>
+                    
+                    <div class="ml-4 space-y-3">
+                        <div>
+                            <p class="font-semibold text-green-700">📄 JSON Export (Recommended for Backup)</p>
+                            <ul class="text-sm space-y-1 ml-4 mt-1">
+                                <li>✅ <strong>Perfect for re-importing</strong> - preserves everything</li>
+                                <li>✅ Keeps original task IDs and timestamps</li>
+                                <li>✅ Maintains exact task order</li>
+                                <li>✅ All notes and metadata preserved</li>
+                                <li>💡 <em>Use this for backups and transferring between devices</em></li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <p class="font-semibold text-blue-700">📊 CSV Export (For Viewing/Editing)</p>
+                            <ul class="text-sm space-y-1 ml-4 mt-1">
+                                <li>✅ Opens in Excel, Google Sheets, etc.</li>
+                                <li>✅ Human-readable format</li>
+                                <li>✅ Easy to print or share with others</li>
+                                <li>✅ Can edit in spreadsheet and re-import</li>
+                                <li>⚠️ <em>See limitations below when re-importing CSV</em></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Import Section -->
+                <div class="bg-white rounded-lg p-4">
+                    <h4 class="font-bold text-gray-800 mb-2">📥 Import Options</h4>
+                    
+                    <div class="ml-4 space-y-3">
+                        <div>
+                            <p class="font-semibold text-green-700">JSON Import</p>
+                            <ul class="text-sm space-y-1 ml-4 mt-1">
+                                <li>✅ Perfect restoration of all task data</li>
+                                <li>✅ Preserves IDs, timestamps, and order</li>
+                                <li>✅ No data loss</li>
+                            </ul>
+                        </div>
+
+                        <div class="border-l-4 border-yellow-500 pl-3">
+                            <p class="font-semibold text-yellow-700">CSV Import (With Limitations)</p>
+                            <ul class="text-sm space-y-1 ml-4 mt-1">
+                                <li>⚠️ <strong>New task IDs generated</strong> (loses original IDs)</li>
+                                <li>⚠️ <strong>Current timestamp used</strong> (loses original creation dates)</li>
+                                <li>⚠️ <strong>Task order may change</strong> (uses CSV row order)</li>
+                                <li>✅ Task content, notes, and quadrants preserved</li>
+                                <li>💡 <em>Useful for adding tasks from spreadsheets or edited exports</em></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi-Device Section -->
+                <div class="bg-white rounded-lg p-4 border-l-4 border-purple-500">
+                    <h4 class="font-bold text-purple-800 mb-2">🔄 Using Multiple Devices</h4>
+                    <ol class="text-sm space-y-1 ml-4 list-decimal">
+                        <li>Export JSON from Device 1</li>
+                        <li>Transfer file (email, USB, cloud drive, etc.)</li>
+                        <li>Import JSON on Device 2</li>
+                        <li>Your tasks are now on both devices!</li>
+                    </ol>
+                    <p class="text-xs text-gray-600 mt-2 ml-4">💡 No automatic sync = better privacy and control</p>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border-2 border-green-300">
+                    <h4 class="font-bold text-gray-800 mb-2">💡 Best Practices</h4>
+                    <ul class="text-sm space-y-1 ml-4">
+                        <li>📥 <strong>Regular backups:</strong> Export JSON weekly or after major changes</li>
+                        <li>💾 <strong>For backup/restore:</strong> Use JSON export (100% data preservation)</li>
+                        <li>📊 <strong>For viewing/printing:</strong> Use CSV export (human-readable)</li>
+                        <li>📝 <strong>For editing in Excel:</strong> Export CSV, edit, import CSV back</li>
+                        <li>🔒 <strong>Your data stays private:</strong> Only you control when/where it moves</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <!-- Add Task Section -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 class="text-2xl font-bold mb-4 text-gray-800">➕ Add New Task</h2>
@@ -98,9 +200,16 @@
                 <button 
                     onclick="importTasks()" 
                     class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                    title="Import tasks from JSON file"
+                    title="Import tasks from JSON or CSV file"
                 >
-                    📥 Import Tasks
+                    📥 Import
+                </button>
+                <button 
+                    onclick="toggleInfo()" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                    title="Learn about export/import and privacy"
+                >
+                    ℹ️ Info
                 </button>
                 <button 
                     onclick="clearAllTasks()" 
@@ -112,7 +221,7 @@
                 <input 
                     type="file" 
                     id="importFile" 
-                    accept=".json" 
+                    accept=".json,.csv" 
                     onchange="handleFileImport(event)" 
                     class="hidden"
                 />
