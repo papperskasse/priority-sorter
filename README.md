@@ -6,8 +6,8 @@ A modern, full-stack web application for organizing tasks using the Eisenhower M
 
 - **Eisenhower Matrix Layout**: Four quadrants for task prioritization
   - 🔴 **Do First**: Urgent & Important
-  - 🟠 **Schedule**: Urgent but Not Important
-  - 🔵 **Delegate**: Not Urgent but Important
+  - 🟠 **Delegate**: Urgent but Not Important
+  - 🔵 **Schedule**: Not Urgent but Important
   - ⚪ **Eliminate**: Not Urgent & Not Important
 
 - **Drag & Drop**: Seamlessly move tasks between quadrants
@@ -17,20 +17,28 @@ A modern, full-stack web application for organizing tasks using the Eisenhower M
   - When (Timing)
   - With Whom (People involved)
   - Additional notes
-- **Real-time Updates**: Instant synchronization with the backend
+- **🔒 100% Private**: All data stored locally in your browser
+- **Export/Import**: 
+  - Export as JSON (for backup and sharing)
+  - Export as CSV (human-readable, opens in Excel)
+  - Import from JSON to restore or transfer tasks
 - **Beautiful UI**: Modern design with Tailwind CSS
+- **No Login Required**: Start using immediately
 
 ## 🛠️ Tech Stack
 
-### Backend
+### Frontend (Primary)
+- **Vanilla JavaScript (ES6+)**: Clean, lightweight frontend
+- **Browser localStorage**: 100% private, client-side storage
+- **Tailwind CSS**: Utility-first CSS framework
+- **HTML5**: Modern markup
+
+### Backend (Optional - For Development/API Testing)
 - **FastAPI**: High-performance Python web framework
 - **Uvicorn**: Lightning-fast ASGI server
 - **Pydantic**: Data validation and settings management
 
-### Frontend
-- **Vanilla JavaScript (ES6+)**: Clean, lightweight frontend
-- **Tailwind CSS**: Utility-first CSS framework
-- **HTML5**: Modern markup
+**Note**: The app runs entirely in the browser. The backend is optional and only needed for development/testing.
 
 ## 🚀 Getting Started
 
@@ -121,6 +129,18 @@ When editing a task, you can add detailed information:
 - **When**: Timing or deadlines
 - **With Whom**: People involved or responsible
 - **Additional**: Any other relevant details
+
+### Export & Import
+- **💾 Export JSON**: Download your tasks as a JSON file (for backup or transferring to another device)
+- **📊 Export CSV**: Download as CSV to open in Excel/Google Sheets (human-readable)
+- **📥 Import Tasks**: Upload a previously exported JSON file to restore your tasks
+- **🗑️ Clear All**: Delete all tasks (with confirmation)
+
+### Privacy & Data
+- **100% Private**: All your tasks are stored locally in your browser
+- **No Account Needed**: Start using immediately
+- **No Server Storage**: Your data never leaves your device
+- **Multiple Devices**: Export from one device, import on another
 
 ## 🏗️ Project Structure
 

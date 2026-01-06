@@ -5,6 +5,7 @@ let currentEditingTaskId = null;
 document.addEventListener('DOMContentLoaded', () => {
     loadTasks();
     setupEventListeners();
+    updateTaskCount();
 });
 
 // Setup event listeners
@@ -17,31 +18,25 @@ function setupEventListeners() {
     });
 }
 
-// Load all tasks from the API
-async function loadTasks() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/tasks`);
-        if (!response.ok) throw new Error('Failed to load tasks');
-        
-        const tasks = await response.json();
-        
-        // Clear all quadrants
-        for (let i = 1; i <= 4; i++) {
-            document.getElementById(`quadrant-${i}`).innerHTML = '';
-        }
-        
-        // Add tasks to their respective quadrants
-        tasks.forEach(task => {
-            addTaskToDOM(task);
-        });
-    } catch (error) {
-        console.error('Error loading tasks:', error);
-        showNotification('Error loading tasks. Make sure the backend is running.', 'error');
+// Load all tasks from localStorage
+function loadTasks() {
+    const tasks = StorageManager.loadTasks();
+    
+    // Clear all quadrants
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById(`quadrant-${i}`).innerHTML = '';
     }
+    
+    // Add tasks to their respective quadrants
+    tasks.forEach(task => {
+        addTaskToDOM(task);
+    });
+    
+    updateTaskCount();
 }
 
 // Add a new task
-async function addTask() {
+function addTask() {
     const title = document.getElementById('taskTitle').value.trim();
     const urgent = document.getElementById('taskUrgent').checked;
     const important = document.getElementById('taskImportant').checked;
@@ -51,43 +46,44 @@ async function addTask() {
         return;
     }
     
-    const taskData = {
-        title,
-        urgent,
-        important,
+    // Calculate quadrant
+    let quadrant;
+    if (urgent && important) {
+        quadrant = 1;  // Do First
+    } else if (urgent && !important) {
+        quadrant = 2;  // Schedule
+    } else if (!urgent && important) {
+        quadrant = 3;  // Delegate
+    } else {
+        quadrant = 4;  // Eliminate
+    }
+    
+    const task = {
+        id: generateId(),
+        title: title,
+        urgent: urgent,
+        important: important,
         notes: {
             why: '',
             how: '',
             when: '',
             with_whom: '',
             additional: ''
-        }
+        },
+        created_at: new Date().toISOString(),
+        quadrant: quadrant
     };
     
-    try {
-        const response = await fetch(`${API_BASE_URL}/tasks`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(taskData)
-        });
-        
-        if (!response.ok) throw new Error('Failed to create task');
-        
-        const task = await response.json();
-        addTaskToDOM(task);
-        
-        // Clear form
-        document.getElementById('taskTitle').value = '';
-        document.getElementById('taskUrgent').checked = false;
-        document.getElementById('taskImportant').checked = false;
-        
-        showNotification('Task added successfully!', 'success');
-    } catch (error) {
-        console.error('Error adding task:', error);
-        showNotification('Error adding task', 'error');
-    }
+    StorageManager.addTask(task);
+    addTaskToDOM(task);
+    
+    // Clear form
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskUrgent').checked = false;
+    document.getElementById('taskImportant').checked = false;
+    
+    updateTaskCount();
+    showNotification('Task added successfully!', 'success');
 }
 
 // Add task to DOM
@@ -170,41 +166,60 @@ function toggleNotes(taskId) {
 }
 
 // Edit task
-async function editTask(taskId) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`);
-        if (!response.ok) throw new Error('Failed to load task');
-        
-        const task = await response.json();
-        
-        // Populate modal
-        document.getElementById('editTitle').value = task.title;
-        document.getElementById('editUrgent').checked = task.urgent;
-        document.getElementById('editImportant').checked = task.important;
-        document.getElementById('editWhy').value = task.notes.why || '';
-        document.getElementById('editHow').value = task.notes.how || '';
-        document.getElementById('editWhen').value = task.notes.when || '';
-        document.getElementById('editWithWhom').value = task.notes.with_whom || '';
-        document.getElementById('editAdditional').value = task.notes.additional || '';
-        
-        currentEditingTaskId = taskId;
-        
-        // Show modal
-        document.getElementById('editModal').classList.remove('hidden');
-    } catch (error) {
-        console.error('Error loading task for edit:', error);
-        showNotification('Error loading task', 'error');
+function editTask(taskId) {
+    const task = StorageManager.getTask(taskId);
+    
+    if (!task) {
+        showNotification('Task not found', 'error');
+        return;
     }
+    
+    // Populate modal
+    document.getElementById('editTitle').value = task.title;
+    document.getElementById('editUrgent').checked = task.urgent;
+    document.getElementById('editImportant').checked = task.important;
+    document.getElementById('editWhy').value = task.notes.why || '';
+    document.getElementById('editHow').value = task.notes.how || '';
+    document.getElementById('editWhen').value = task.notes.when || '';
+    document.getElementById('editWithWhom').value = task.notes.with_whom || '';
+    document.getElementById('editAdditional').value = task.notes.additional || '';
+    
+    currentEditingTaskId = taskId;
+    
+    // Show modal
+    document.getElementById('editModal').classList.remove('hidden');
 }
 
 // Save edited task
-async function saveEdit() {
+function saveEdit() {
     if (!currentEditingTaskId) return;
     
-    const taskData = {
-        title: document.getElementById('editTitle').value.trim(),
-        urgent: document.getElementById('editUrgent').checked,
-        important: document.getElementById('editImportant').checked,
+    const title = document.getElementById('editTitle').value.trim();
+    const urgent = document.getElementById('editUrgent').checked;
+    const important = document.getElementById('editImportant').checked;
+    
+    if (!title) {
+        showNotification('Task title cannot be empty', 'warning');
+        return;
+    }
+    
+    // Calculate new quadrant
+    let quadrant;
+    if (urgent && important) {
+        quadrant = 1;
+    } else if (urgent && !important) {
+        quadrant = 2;
+    } else if (!urgent && important) {
+        quadrant = 3;
+    } else {
+        quadrant = 4;
+    }
+    
+    const updates = {
+        title: title,
+        urgent: urgent,
+        important: important,
+        quadrant: quadrant,
         notes: {
             why: document.getElementById('editWhy').value.trim(),
             how: document.getElementById('editHow').value.trim(),
@@ -214,29 +229,10 @@ async function saveEdit() {
         }
     };
     
-    if (!taskData.title) {
-        showNotification('Task title cannot be empty', 'warning');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE_URL}/tasks/${currentEditingTaskId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(taskData)
-        });
-        
-        if (!response.ok) throw new Error('Failed to update task');
-        
-        closeEditModal();
-        loadTasks();
-        showNotification('Task updated successfully!', 'success');
-    } catch (error) {
-        console.error('Error updating task:', error);
-        showNotification('Error updating task', 'error');
-    }
+    StorageManager.updateTask(currentEditingTaskId, updates);
+    closeEditModal();
+    loadTasks();
+    showNotification('Task updated successfully!', 'success');
 }
 
 // Close edit modal
@@ -246,27 +242,19 @@ function closeEditModal() {
 }
 
 // Delete task
-async function deleteTask(taskId) {
+function deleteTask(taskId) {
     if (!confirm('Are you sure you want to delete this task?')) return;
     
-    try {
-        const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
-            method: 'DELETE'
-        });
-        
-        if (!response.ok) throw new Error('Failed to delete task');
-        
-        // Remove from DOM
-        const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
-        if (taskCard) {
-            taskCard.remove();
-        }
-        
-        showNotification('Task deleted successfully!', 'success');
-    } catch (error) {
-        console.error('Error deleting task:', error);
-        showNotification('Error deleting task', 'error');
+    StorageManager.deleteTask(taskId);
+    
+    // Remove from DOM
+    const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (taskCard) {
+        taskCard.remove();
     }
+    
+    updateTaskCount();
+    showNotification('Task deleted successfully!', 'success');
 }
 
 // Drag and Drop Functions
@@ -291,7 +279,7 @@ function dragLeave(e) {
     e.currentTarget.classList.remove('drag-over');
 }
 
-async function drop(e) {
+function drop(e) {
     e.preventDefault();
     e.currentTarget.classList.remove('drag-over');
     
@@ -300,27 +288,73 @@ async function drop(e) {
     
     if (!taskId || !newQuadrant) return;
     
-    try {
-        const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ quadrant: newQuadrant })
-        });
-        
-        if (!response.ok) throw new Error('Failed to update task quadrant');
-        
-        // Reload tasks to reflect the change
-        loadTasks();
-        showNotification('Task moved successfully!', 'success');
-    } catch (error) {
-        console.error('Error moving task:', error);
-        showNotification('Error moving task', 'error');
+    const task = StorageManager.getTask(taskId);
+    if (!task) return;
+    
+    // Update urgent/important based on quadrant
+    let updates = { quadrant: newQuadrant };
+    
+    if (newQuadrant === 1) {
+        updates.urgent = true;
+        updates.important = true;
+    } else if (newQuadrant === 2) {
+        updates.urgent = true;
+        updates.important = false;
+    } else if (newQuadrant === 3) {
+        updates.urgent = false;
+        updates.important = true;
+    } else if (newQuadrant === 4) {
+        updates.urgent = false;
+        updates.important = false;
+    }
+    
+    StorageManager.updateTask(taskId, updates);
+    loadTasks();
+    showNotification('Task moved successfully!', 'success');
+}
+
+// Export/Import Functions
+function exportJSON() {
+    StorageManager.exportTasks();
+}
+
+function exportCSV() {
+    StorageManager.exportToCSV();
+}
+
+function importTasks() {
+    document.getElementById('importFile').click();
+}
+
+function handleFileImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const merge = confirm('Do you want to MERGE with existing tasks?\n\nClick OK to merge, or Cancel to REPLACE all tasks.');
+    StorageManager.importTasks(file, merge);
+    
+    // Reset file input
+    event.target.value = '';
+}
+
+function clearAllTasks() {
+    StorageManager.clearAll();
+}
+
+// Update task count display
+function updateTaskCount() {
+    const count = StorageManager.getTaskCount();
+    const countElement = document.getElementById('taskCount');
+    if (countElement) {
+        countElement.textContent = count;
     }
 }
 
 // Utility Functions
+function generateId() {
+    return 'task-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+}
+
 function escapeHtml(text) {
     const map = {
         '&': '&amp;',
@@ -359,3 +393,9 @@ document.getElementById('editModal')?.addEventListener('click', (e) => {
         closeEditModal();
     }
 });
+
+// Log storage info
+console.log('🎯 Priority Sorter - Browser Storage Mode');
+console.log('📦 All data is stored locally in your browser');
+console.log('🔒 Your tasks are completely private');
+console.log(`📊 Current tasks: ${StorageManager.getTaskCount()}`);
