@@ -103,17 +103,21 @@ function addTaskToDOM(task) {
     
     taskCard.innerHTML = `
         <div class="flex justify-between items-center gap-2">
-            <h4 class="text-sm font-medium text-gray-800 flex-1 truncate">${escapeHtml(task.title)}</h4>
+            <div class="flex-1 truncate cursor-pointer hover:text-blue-600" onclick="showQuickView('${task.id}')">
+                <h4 class="text-sm font-medium text-gray-800">${escapeHtml(task.title)}</h4>
+                ${hasNotes ? `<div class="text-xs text-gray-500 mt-0.5">📝 Has details</div>` : ''}
+            </div>
             <div class="flex gap-1 flex-shrink-0">
                 <a 
                     href="edit-task.html?id=${task.id}" 
                     class="text-blue-600 hover:text-blue-800 text-xs"
                     title="Edit task"
+                    onclick="event.stopPropagation()"
                 >
                     ✏️
                 </a>
                 <button 
-                    onclick="deleteTask('${task.id}')" 
+                    onclick="event.stopPropagation(); deleteTask('${task.id}')" 
                     class="text-red-600 hover:text-red-800 text-xs"
                     title="Delete task"
                 >
@@ -121,7 +125,6 @@ function addTaskToDOM(task) {
                 </button>
             </div>
         </div>
-        ${hasNotes ? `<div class="text-xs text-gray-500 mt-1">📝 Has notes</div>` : ''}
     `;
     
     // Add drag event listeners
@@ -443,6 +446,94 @@ function showNotification(message, type = 'info') {
         notification.style.opacity = '0';
         setTimeout(() => notification.remove(), 500);
     }, 3000);
+}
+
+// Quick View Modal Functions
+function showQuickView(taskId) {
+    const task = StorageManager.getTask(taskId);
+    if (!task) return;
+
+    const modal = document.getElementById('quickViewModal');
+    const content = document.getElementById('quickViewContent');
+    const editBtn = document.getElementById('quickViewEditBtn');
+    
+    // Update title
+    document.getElementById('quickViewTitle').textContent = task.title;
+    
+    // Set edit button action
+    editBtn.onclick = () => {
+        window.location.href = `edit-task.html?id=${taskId}`;
+    };
+
+    // Quadrant info
+    const quadrantNames = {
+        1: '🔴 Do First (Urgent & Important)',
+        2: '🟠 Delegate (Urgent but Not Important)',
+        3: '🔵 Schedule (Not Urgent but Important)',
+        4: '⚪ Eliminate (Not Urgent & Not Important)'
+    };
+
+    // Build content
+    let html = `
+        <div class="space-y-4">
+            <!-- Status -->
+            <div class="bg-gray-50 rounded-lg p-3">
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <span class="text-gray-600 font-semibold">Quadrant:</span>
+                        <p class="text-gray-800 mt-1">${quadrantNames[task.quadrant]}</p>
+                    </div>
+                    <div>
+                        <span class="text-gray-600 font-semibold">Created:</span>
+                        <p class="text-gray-800 mt-1">${new Date(task.created_at).toLocaleDateString()}</p>
+                    </div>
+                </div>
+            </div>
+    `;
+
+    // Only show sections if they have content
+    const sections = [
+        { icon: '❓', label: 'Why (Purpose)', value: task.notes.why },
+        { icon: '🔧', label: 'How (Method)', value: task.notes.how },
+        { icon: '📅', label: 'When (Timing)', value: task.notes.when },
+        { icon: '👥', label: 'With Whom', value: task.notes.with_whom },
+        { icon: '📦', label: 'Details & Breakdown', value: task.notes.additional }
+    ];
+
+    const hasAnyNotes = sections.some(s => s.value);
+
+    if (hasAnyNotes) {
+        sections.forEach(section => {
+            if (section.value) {
+                html += `
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-2">${section.icon} ${section.label}</h4>
+                        <div class="bg-gray-50 rounded-lg p-3 text-gray-700 text-sm whitespace-pre-wrap">${escapeHtml(section.value)}</div>
+                    </div>
+                `;
+            }
+        });
+    } else {
+        html += `
+            <div class="text-center py-8 text-gray-500">
+                <p class="text-lg mb-2">📝</p>
+                <p>No details added yet</p>
+                <p class="text-sm mt-1">Click "Edit Task" to add planning details</p>
+            </div>
+        `;
+    }
+
+    html += `</div>`;
+    
+    content.innerHTML = html;
+    modal.classList.remove('hidden');
+}
+
+function closeQuickView(event) {
+    // If event is provided, check if clicking outside
+    if (event && event.target.id !== 'quickViewModal') return;
+    
+    document.getElementById('quickViewModal').classList.add('hidden');
 }
 
 // Close modal when clicking outside
