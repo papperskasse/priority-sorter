@@ -91,7 +91,7 @@ function addTaskToDOM(task) {
     const quadrant = document.getElementById(`quadrant-${task.quadrant}`);
     
     const taskCard = document.createElement('div');
-    taskCard.className = 'task-card bg-white border border-gray-200 rounded-md p-2 cursor-move shadow-sm';
+    taskCard.className = 'task-card bg-white border border-gray-200 rounded p-1.5 cursor-move shadow-sm';
     taskCard.draggable = true;
     taskCard.dataset.taskId = task.id;
     
@@ -102,15 +102,15 @@ function addTaskToDOM(task) {
     );
     
     taskCard.innerHTML = `
-        <div class="flex justify-between items-center gap-2">
-            <div class="flex-1 truncate cursor-pointer hover:text-blue-600" onclick="showQuickView('${task.id}')">
-                <h4 class="text-sm font-medium text-gray-800">${escapeHtml(task.title)}</h4>
-                ${hasNotes ? `<div class="text-xs text-gray-500 mt-0.5">📝 Has details</div>` : ''}
+        <div class="flex justify-between items-center gap-1">
+            <div class="flex-1 min-w-0 cursor-pointer hover:text-blue-600" onclick="showQuickView('${task.id}')">
+                <h4 class="text-xs font-medium text-gray-800 truncate leading-tight">${escapeHtml(task.title)}</h4>
+                ${hasNotes ? `<div class="text-[10px] text-gray-500 mt-0.5">📝</div>` : ''}
             </div>
-            <div class="flex gap-1 flex-shrink-0">
+            <div class="flex gap-0.5 flex-shrink-0 text-[11px]">
                 <a 
                     href="edit-task.html?id=${task.id}" 
-                    class="text-blue-600 hover:text-blue-800 text-xs"
+                    class="text-blue-600 hover:text-blue-800 px-0.5"
                     title="Edit task"
                     onclick="event.stopPropagation()"
                 >
@@ -118,7 +118,7 @@ function addTaskToDOM(task) {
                 </a>
                 <button 
                     onclick="event.stopPropagation(); deleteTask('${task.id}')" 
-                    class="text-red-600 hover:text-red-800 text-xs"
+                    class="text-red-600 hover:text-red-800 px-0.5"
                     title="Delete task"
                 >
                     🗑️
