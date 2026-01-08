@@ -255,7 +255,7 @@ function updateDetailPane(task) {
     // Quadrant Names
     const quadrantNames = {
         1: '🔴 Urgent & Important (Focus & Execute)',
-        2: '🟠 Urgent & Not Important (Delegate, Batch, Automate or Minimize)',
+        2: '🟠 Urgent & Not Important (Delegate, Batch, Automate or Minimal Effective Effort)',
         3: '🔵 Not Urgent & Important (Strategize & Schedule)',
         4: '⚪ Not Urgent & Not Important (Put on Ice / Limit)'
     };
@@ -282,7 +282,7 @@ function updateDetailPane(task) {
                     <li>🤝 <strong>Delegate:</strong> Assign this to a team member.</li>
                     <li>📦 <strong>Batch:</strong> Do all of these at once later today.</li>
                     <li>🤖 <strong>Automate:</strong> Find a way to make this run itself.</li>
-                    <li>📉 <strong>Minimize:</strong> Use minimal effective effort.</li>
+                    <li>📉 <strong>Minimal Effective Effort:</strong> Apply just enough to get it done.</li>
                 </ul>
             </div>
         `;

@@ -94,7 +94,7 @@ const StorageManager = {
         tasks.forEach(task => {
             const quadrantNames = {
                 1: 'Urgent & Important (Focus & Execute)',
-                2: 'Urgent & Not Important (Minimize or Hand Off)',
+                2: 'Urgent & Not Important (Minimal Effective Effort or Hand Off)',
                 3: 'Not Urgent & Important (Strategize & Schedule)',
                 4: 'Not Urgent & Not Important (Put on Ice / Limit)'
             };
