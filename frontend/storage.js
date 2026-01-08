@@ -93,10 +93,10 @@ const StorageManager = {
         // Add each task
         tasks.forEach(task => {
             const quadrantNames = {
-                1: 'Do First (Urgent & Important)',
-                2: 'Delegate (Urgent but Not Important)',
-                3: 'Schedule (Not Urgent but Important)',
-                4: 'Eliminate (Not Urgent & Not Important)'
+                1: 'Urgent & Important (Focus & Execute)',
+                2: 'Urgent & Not Important (Minimize or Hand Off)',
+                3: 'Not Urgent & Important (Strategize & Schedule)',
+                4: 'Not Urgent & Not Important (Put on Ice / Limit)'
             };
             
             const row = [

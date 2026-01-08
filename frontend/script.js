@@ -225,11 +225,22 @@ function updateDetailPane(task) {
         }
     }
     
+    // Quadrant Names
+    const quadrantNames = {
+        1: '🔴 Urgent & Important (Focus & Execute)',
+        2: '🟠 Urgent & Not Important (Minimize or Hand Off)',
+        3: '🔵 Not Urgent & Important (Strategize & Schedule)',
+        4: '⚪ Not Urgent & Not Important (Put on Ice / Limit)'
+    };
+    
     // Build content
     let html = `
         <div class="h-full flex flex-col">
             <div class="flex justify-between items-start mb-2 pb-2 border-b border-gray-100">
-                <h5 class="text-sm font-bold text-gray-800 leading-tight pr-4">${escapeHtml(task.title)}</h5>
+                <div>
+                    <h5 class="text-sm font-bold text-gray-800 leading-tight pr-4">${escapeHtml(task.title)}</h5>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase mt-1">${quadrantNames[task.quadrant]}</p>
+                </div>
                 <button onclick="closeDetailPane(${task.quadrant})" class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
             </div>
             <div class="flex-1 space-y-3 overflow-y-auto pr-1 custom-scrollbar">

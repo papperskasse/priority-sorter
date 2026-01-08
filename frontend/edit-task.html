@@ -188,10 +188,10 @@
 
             // Show current quadrant
             const quadrantNames = {
-                1: '🔴 Do First (Urgent & Important)',
-                2: '🟠 Delegate (Urgent)',
-                3: '🔵 Schedule (Important)',
-                4: '⚪ Eliminate'
+                1: '🔴 Urgent & Important (Focus & Execute)',
+                2: '🟠 Urgent & Not Important (Minimize or Hand Off)',
+                3: '🔵 Not Urgent & Important (Strategize & Schedule)',
+                4: '⚪ Not Urgent & Not Important (Put on Ice / Limit)'
             };
             document.getElementById('currentQuadrant').textContent = quadrantNames[task.quadrant] || 'Unknown';
             document.getElementById('createdDate').textContent = new Date(task.created_at).toLocaleString();
