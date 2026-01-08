@@ -341,7 +341,13 @@ function dragStart(e) {
     
     e.target.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('taskId', e.target.dataset.taskId);
+    
+    // Safari Fix: Standardize data type
+    try {
+        e.dataTransfer.setData('text/plain', e.target.dataset.taskId);
+    } catch (err) {
+        e.dataTransfer.setData('taskId', e.target.dataset.taskId);
+    }
 }
 
 function dragEnd(e) {
@@ -357,6 +363,9 @@ function dragEnd(e) {
 
 function allowDrop(e) {
     e.preventDefault();
+    // Safari Fix: dragover and dragenter both need preventDefault
+    if (e.type === 'dragenter') return;
+    
     e.dataTransfer.dropEffect = 'move';
     
     const quadrantTasks = e.currentTarget;
@@ -389,7 +398,8 @@ function drop(e) {
     const quadrantContainer = list.closest('.quadrant');
     list.classList.remove('drag-over');
     
-    const taskId = e.dataTransfer.getData('taskId');
+    // Safari Fix: Try getting data from multiple possible keys
+    const taskId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('taskId');
     const newQuadrant = parseInt(quadrantContainer.dataset.quadrant);
     
     if (!taskId || !newQuadrant) return;
