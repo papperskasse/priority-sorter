@@ -1,5 +1,6 @@
 // State management
 let currentEditingTaskId = null;
+let selectedTaskId = null;
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
@@ -26,17 +27,32 @@ function setupEventListeners() {
 
 // Load all tasks from localStorage
 function loadTasks() {
-    const tasks = StorageManager.loadTasks();
+    const tasks = StorageManager.getActiveTasks(); // Only non-completed
     
     // Clear all quadrants
     for (let i = 1; i <= 4; i++) {
-        document.getElementById(`quadrant-${i}`).innerHTML = '';
+        const quad = document.getElementById(`quadrant-${i}`);
+        if (quad) {
+            const list = quad.querySelector('.quadrant-tasks');
+            if (list) list.innerHTML = '';
+        }
     }
     
     // Add tasks to their respective quadrants
     tasks.forEach(task => {
         addTaskToDOM(task);
     });
+    
+    // Re-select task if it still exists
+    if (selectedTaskId) {
+        const task = StorageManager.getTask(selectedTaskId);
+        if (task && !task.completed) {
+            highlightSelectedTask(selectedTaskId);
+            updateDetailPane(task);
+        } else {
+            selectedTaskId = null;
+        }
+    }
     
     updateTaskCount();
 }
@@ -57,9 +73,9 @@ function addTask() {
     if (urgent && important) {
         quadrant = 1;  // Do First
     } else if (urgent && !important) {
-        quadrant = 2;  // Schedule
+        quadrant = 2;  // Delegate
     } else if (!urgent && important) {
-        quadrant = 3;  // Delegate
+        quadrant = 3;  // Schedule
     } else {
         quadrant = 4;  // Eliminate
     }
@@ -69,6 +85,7 @@ function addTask() {
         title: title,
         urgent: urgent,
         important: important,
+        completed: false,
         notes: {
             why: '',
             how: '',
@@ -95,9 +112,13 @@ function addTask() {
 // Add task to DOM
 function addTaskToDOM(task) {
     const quadrant = document.getElementById(`quadrant-${task.quadrant}`);
+    if (!quadrant) return;
+    
+    const list = quadrant.querySelector('.quadrant-tasks');
+    if (!list) return;
     
     const taskCard = document.createElement('div');
-    taskCard.className = 'task-card bg-white border border-gray-200 rounded p-1.5 cursor-move shadow-sm';
+    taskCard.className = `task-card bg-white border border-gray-200 rounded p-1.5 cursor-move shadow-sm ${selectedTaskId === task.id ? 'selected' : ''}`;
     taskCard.draggable = true;
     taskCard.dataset.taskId = task.id;
     
@@ -109,11 +130,19 @@ function addTaskToDOM(task) {
     
     taskCard.innerHTML = `
         <div class="flex justify-between items-center gap-1">
-            <div class="flex-1 min-w-0 cursor-pointer hover:text-blue-600" onclick="showQuickView('${task.id}')">
-                <h4 class="text-xs font-medium text-gray-800 truncate leading-tight">${escapeHtml(task.title)}</h4>
-                ${hasNotes ? `<div class="text-[10px] text-gray-500 mt-0.5">📝</div>` : ''}
+            <div class="flex items-center gap-1.5 flex-1 min-w-0">
+                <input 
+                    type="checkbox" 
+                    ${task.completed ? 'checked' : ''} 
+                    onclick="event.stopPropagation(); toggleTaskComplete('${task.id}')"
+                    class="w-3.5 h-3.5 text-green-600 rounded cursor-pointer"
+                >
+                <div class="flex-1 min-w-0 cursor-pointer hover:text-blue-600" onclick="selectTask('${task.id}')">
+                    <h4 class="text-xs font-medium text-gray-800 truncate leading-tight">${escapeHtml(task.title)}</h4>
+                </div>
             </div>
             <div class="flex gap-0.5 flex-shrink-0 text-[11px]">
+                ${hasNotes ? `<span class="text-[10px] mr-0.5" title="Has details">📝</span>` : ''}
                 <a 
                     href="edit-task.html?id=${task.id}" 
                     class="text-blue-600 hover:text-blue-800 px-0.5"
@@ -137,103 +166,159 @@ function addTaskToDOM(task) {
     taskCard.addEventListener('dragstart', dragStart);
     taskCard.addEventListener('dragend', dragEnd);
     
-    quadrant.appendChild(taskCard);
+    list.appendChild(taskCard);
 }
 
-// Toggle notes visibility
-function toggleNotes(taskId) {
-    const notesSection = document.getElementById(`notes-${taskId}`);
-    notesSection.classList.toggle('expanded');
+// Select a task to show details in side pane
+function selectTask(taskId) {
+    const task = StorageManager.getTask(taskId);
+    if (!task) return;
     
-    const button = notesSection.previousElementSibling;
-    if (notesSection.classList.contains('expanded')) {
-        button.textContent = '📝 Hide Notes ▲';
-    } else {
-        button.textContent = '📝 View Notes ▼';
+    selectedTaskId = taskId;
+    highlightSelectedTask(taskId);
+    updateDetailPane(task);
+}
+
+function highlightSelectedTask(taskId) {
+    // Remove selected class from all cards
+    document.querySelectorAll('.task-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add to specific card
+    const card = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (card) card.classList.add('selected');
+}
+
+function updateDetailPane(task) {
+    const detailPane = document.getElementById(`detail-${task.quadrant}`);
+    if (!detailPane) return;
+    
+    // Clear other detail panes
+    for (let i = 1; i <= 4; i++) {
+        if (i !== task.quadrant) {
+            const dp = document.getElementById(`detail-${i}`);
+            if (dp) dp.innerHTML = '<p class="text-xs text-gray-400 italic text-center mt-4">Select a task to see breakdown</p>';
+        }
     }
+    
+    // Build content
+    let html = `
+        <div class="h-full flex flex-col">
+            <div class="flex justify-between items-start mb-2 pb-2 border-b border-gray-100">
+                <h5 class="text-sm font-bold text-gray-800 leading-tight pr-4">${escapeHtml(task.title)}</h5>
+                <button onclick="closeDetailPane(${task.quadrant})" class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+            </div>
+            <div class="flex-1 space-y-3 overflow-y-auto pr-1 custom-scrollbar">
+    `;
+    
+    if (task.notes.why) {
+        html += `<div class="detail-section">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">❓ Why</span>
+            <p class="text-xs text-gray-700 mt-0.5">${escapeHtml(task.notes.why)}</p>
+        </div>`;
+    }
+    
+    if (task.notes.how) {
+        html += `<div class="detail-section">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">🔧 How</span>
+            <p class="text-xs text-gray-700 mt-0.5">${escapeHtml(task.notes.how)}</p>
+        </div>`;
+    }
+    
+    if (task.notes.when) {
+        html += `<div class="detail-section">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">📅 When</span>
+            <p class="text-xs text-gray-700 mt-0.5">${escapeHtml(task.notes.when)}</p>
+        </div>`;
+    }
+    
+    if (task.notes.with_whom) {
+        html += `<div class="detail-section">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">👥 Who</span>
+            <p class="text-xs text-gray-700 mt-0.5">${escapeHtml(task.notes.with_whom)}</p>
+        </div>`;
+    }
+    
+    if (task.notes.additional) {
+        html += `<div class="detail-section">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">📦 Breakdown</span>
+            <div class="text-xs text-gray-700 mt-1 bg-gray-50 p-2 rounded border border-gray-100 whitespace-pre-wrap leading-relaxed">${escapeHtml(task.notes.additional)}</div>
+        </div>`;
+    }
+    
+    if (!task.notes.why && !task.notes.how && !task.notes.when && !task.notes.with_whom && !task.notes.additional) {
+        html += `<p class="text-xs text-gray-400 italic text-center py-4">No breakdown added yet. <br><a href="edit-task.html?id=${task.id}" class="text-blue-500 hover:underline">Add planning</a></p>`;
+    }
+    
+    html += `
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100 flex justify-between items-center text-[10px] text-gray-400">
+                <span>Created: ${new Date(task.created_at).toLocaleDateString()}</span>
+                <a href="edit-task.html?id=${task.id}" class="text-blue-500 font-semibold hover:underline">Full Edit</a>
+            </div>
+        </div>
+    `;
+    
+    detailPane.innerHTML = html;
+}
+
+function closeDetailPane(quadrantId) {
+    const detailPane = document.getElementById(`detail-${quadrantId}`);
+    if (detailPane) {
+        detailPane.innerHTML = '<p class="text-xs text-gray-400 italic text-center mt-4">Select a task to see breakdown</p>';
+    }
+    selectedTaskId = null;
+    document.querySelectorAll('.task-card').forEach(card => card.classList.remove('selected'));
+}
+
+async function toggleTaskComplete(taskId) {
+    StorageManager.toggleComplete(taskId);
+    showNotification('Task marked as completed! Moving to Finished Tasks.', 'success');
+    
+    // If it was selected, clear detail pane
+    if (selectedTaskId === taskId) {
+        selectedTaskId = null;
+    }
+    
+    // Remove from UI
+    const card = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (card) {
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(20px)';
+        card.style.transition = 'all 0.3s ease';
+        setTimeout(() => loadTasks(), 300);
+    } else {
+        loadTasks();
+    }
+}
+
+// Toggle notes visibility - (Deprecated by new selectTask function)
+function toggleNotes(taskId) {
+    selectTask(taskId);
 }
 
 // Edit task
 function editTask(taskId) {
-    const task = StorageManager.getTask(taskId);
-    
-    if (!task) {
-        showNotification('Task not found', 'error');
-        return;
-    }
-    
-    // Populate modal
-    document.getElementById('editTitle').value = task.title;
-    document.getElementById('editUrgent').checked = task.urgent;
-    document.getElementById('editImportant').checked = task.important;
-    document.getElementById('editWhy').value = task.notes.why || '';
-    document.getElementById('editHow').value = task.notes.how || '';
-    document.getElementById('editWhen').value = task.notes.when || '';
-    document.getElementById('editWithWhom').value = task.notes.with_whom || '';
-    document.getElementById('editAdditional').value = task.notes.additional || '';
-    
-    currentEditingTaskId = taskId;
-    
-    // Show modal
-    document.getElementById('editModal').classList.remove('hidden');
+    window.location.href = `edit-task.html?id=${taskId}`;
 }
 
-// Save edited task
-function saveEdit() {
-    if (!currentEditingTaskId) return;
-    
-    const title = document.getElementById('editTitle').value.trim();
-    const urgent = document.getElementById('editUrgent').checked;
-    const important = document.getElementById('editImportant').checked;
-    
-    if (!title) {
-        showNotification('Task title cannot be empty', 'warning');
-        return;
-    }
-    
-    // Calculate new quadrant
-    let quadrant;
-    if (urgent && important) {
-        quadrant = 1;
-    } else if (urgent && !important) {
-        quadrant = 2;
-    } else if (!urgent && important) {
-        quadrant = 3;
-    } else {
-        quadrant = 4;
-    }
-    
-    const updates = {
-        title: title,
-        urgent: urgent,
-        important: important,
-        quadrant: quadrant,
-        notes: {
-            why: document.getElementById('editWhy').value.trim(),
-            how: document.getElementById('editHow').value.trim(),
-            when: document.getElementById('editWhen').value.trim(),
-            with_whom: document.getElementById('editWithWhom').value.trim(),
-            additional: document.getElementById('editAdditional').value.trim()
-        }
-    };
-    
-    StorageManager.updateTask(currentEditingTaskId, updates);
-    closeEditModal();
-    loadTasks();
-    showNotification('Task updated successfully!', 'success');
-}
+// Save edited task - (Handled by edit-task.html)
+function saveEdit() {}
 
-// Close edit modal
-function closeEditModal() {
-    document.getElementById('editModal').classList.add('hidden');
-    currentEditingTaskId = null;
-}
+// Close edit modal - (Handled by edit-task.html)
+function closeEditModal() {}
 
 // Delete task
 function deleteTask(taskId) {
     if (!confirm('Are you sure you want to delete this task?')) return;
     
     StorageManager.deleteTask(taskId);
+    
+    // If it was selected, clear detail pane
+    if (selectedTaskId === taskId) {
+        selectedTaskId = null;
+    }
     
     // Remove from DOM
     const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
@@ -243,6 +328,7 @@ function deleteTask(taskId) {
     
     updateTaskCount();
     showNotification('Task deleted successfully!', 'success');
+    loadTasks();
 }
 
 // Drag and Drop Functions
@@ -255,7 +341,6 @@ function dragStart(e) {
     
     e.target.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', e.target.innerHTML);
     e.dataTransfer.setData('taskId', e.target.dataset.taskId);
 }
 
@@ -274,19 +359,24 @@ function allowDrop(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     
-    const quadrant = e.currentTarget;
-    const afterElement = getDragAfterElement(quadrant, e.clientY);
+    const quadrantTasks = e.currentTarget;
+    const quadrantContainer = quadrantTasks.closest('.quadrant');
+    quadrantTasks.classList.add('drag-over');
+    
+    const afterElement = getDragAfterElement(quadrantTasks, e.clientY);
     const dragging = document.querySelector('.dragging');
     
-    if (afterElement == null) {
-        quadrant.appendChild(dragging);
-    } else {
-        quadrant.insertBefore(dragging, afterElement);
+    if (dragging) {
+        if (afterElement == null) {
+            quadrantTasks.appendChild(dragging);
+        } else {
+            quadrantTasks.insertBefore(dragging, afterElement);
+        }
     }
 }
 
 function dragLeave(e) {
-    if (e.target.classList.contains('quadrant')) {
+    if (e.target.classList.contains('quadrant-tasks')) {
         e.target.classList.remove('drag-over');
     }
 }
@@ -295,11 +385,12 @@ function drop(e) {
     e.preventDefault();
     e.stopPropagation();
     
-    const quadrant = e.currentTarget;
-    quadrant.classList.remove('drag-over');
+    const list = e.currentTarget;
+    const quadrantContainer = list.closest('.quadrant');
+    list.classList.remove('drag-over');
     
     const taskId = e.dataTransfer.getData('taskId');
-    const newQuadrant = parseInt(quadrant.dataset.quadrant);
+    const newQuadrant = parseInt(quadrantContainer.dataset.quadrant);
     
     if (!taskId || !newQuadrant) return;
     
@@ -328,6 +419,12 @@ function drop(e) {
         }
         
         StorageManager.updateTask(taskId, updates);
+        
+        // If it was selected, update detail pane to show correct quadrant info
+        if (selectedTaskId === taskId) {
+            setTimeout(() => selectTask(taskId), 10);
+        }
+        
         showNotification('Task moved to different quadrant!', 'success');
     }
     
@@ -335,8 +432,8 @@ function drop(e) {
     saveTaskOrder();
 }
 
-function getDragAfterElement(quadrant, y) {
-    const draggableElements = [...quadrant.querySelectorAll('.task-card:not(.dragging)')];
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.task-card:not(.dragging)')];
     
     return draggableElements.reduce((closest, child) => {
         const box = child.getBoundingClientRect();
@@ -362,16 +459,23 @@ function saveTaskOrder() {
     // Go through each quadrant in order and collect task IDs
     for (let i = 1; i <= 4; i++) {
         const quadrant = document.getElementById(`quadrant-${i}`);
-        const taskCards = quadrant.querySelectorAll('.task-card');
+        if (!quadrant) continue;
+        const list = quadrant.querySelector('.quadrant-tasks');
+        const taskCards = list.querySelectorAll('.task-card');
         
         taskCards.forEach(card => {
             orderedTaskIds.push(card.dataset.taskId);
         });
     }
     
-    // Reorder tasks array based on DOM order
-    const orderedTasks = orderedTaskIds.map(id => taskMap[id]).filter(Boolean);
-    StorageManager.saveTasks(orderedTasks);
+    // Include completed tasks that aren't in the matrix
+    const completedTasks = allTasks.filter(t => t.completed);
+    
+    // Reorder active tasks array based on DOM order
+    const orderedActiveTasks = orderedTaskIds.map(id => taskMap[id]).filter(Boolean);
+    
+    // Save both
+    StorageManager.saveTasks([...orderedActiveTasks, ...completedTasks]);
 }
 
 // Export/Import Functions
@@ -423,6 +527,7 @@ function generateId() {
 }
 
 function escapeHtml(text) {
+    if (!text) return '';
     const map = {
         '&': '&amp;',
         '<': '&lt;',
@@ -454,129 +559,6 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Quick View Modal Functions
-function showQuickView(taskId) {
-    const task = StorageManager.getTask(taskId);
-    if (!task) return;
-
-    const modal = document.getElementById('quickViewModal');
-    const content = document.getElementById('quickViewContent');
-    const editBtn = document.getElementById('quickViewEditBtn');
-    
-    // Update title
-    document.getElementById('quickViewTitle').textContent = task.title;
-    
-    // Set edit button action
-    editBtn.onclick = () => {
-        window.location.href = `edit-task.html?id=${taskId}`;
-    };
-
-    // Quadrant info
-    const quadrantNames = {
-        1: '🔴 Do First (Urgent & Important)',
-        2: '🟠 Delegate (Urgent but Not Important)',
-        3: '🔵 Schedule (Not Urgent but Important)',
-        4: '⚪ Eliminate (Not Urgent & Not Important)'
-    };
-
-    // Build content
-    let html = `
-        <div class="space-y-4">
-            <!-- Status -->
-            <div class="bg-gray-50 rounded-lg p-3">
-                <div class="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                        <span class="text-gray-600 font-semibold">Quadrant:</span>
-                        <p class="text-gray-800 mt-1">${quadrantNames[task.quadrant]}</p>
-                    </div>
-                    <div>
-                        <span class="text-gray-600 font-semibold">Created:</span>
-                        <p class="text-gray-800 mt-1">${new Date(task.created_at).toLocaleDateString()}</p>
-                    </div>
-                </div>
-            </div>
-    `;
-
-    // Only show sections if they have content
-    const sections = [
-        { icon: '❓', label: 'Why (Purpose)', value: task.notes.why },
-        { icon: '🔧', label: 'How (Method)', value: task.notes.how },
-        { icon: '📅', label: 'When (Timing)', value: task.notes.when },
-        { icon: '👥', label: 'With Whom', value: task.notes.with_whom },
-        { icon: '📦', label: 'Details & Breakdown', value: task.notes.additional }
-    ];
-
-    const hasAnyNotes = sections.some(s => s.value);
-
-    if (hasAnyNotes) {
-        sections.forEach(section => {
-            if (section.value) {
-                html += `
-                    <div>
-                        <h4 class="font-semibold text-gray-800 mb-2">${section.icon} ${section.label}</h4>
-                        <div class="bg-gray-50 rounded-lg p-3 text-gray-700 text-sm whitespace-pre-wrap">${escapeHtml(section.value)}</div>
-                    </div>
-                `;
-            }
-        });
-    } else {
-        html += `
-            <div class="text-center py-8 text-gray-500">
-                <p class="text-lg mb-2">📝</p>
-                <p>No details added yet</p>
-                <p class="text-sm mt-1">Click "Edit Task" to add planning details</p>
-            </div>
-        `;
-    }
-
-    html += `</div>`;
-    
-    content.innerHTML = html;
-    modal.classList.remove('hidden');
-}
-
-function closeQuickView(event) {
-    // If event is provided, check if clicking outside
-    if (event && event.target.id !== 'quickViewModal') return;
-    
-    document.getElementById('quickViewModal').classList.add('hidden');
-}
-
-// Close modal when clicking outside
-document.getElementById('editModal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'editModal') {
-        closeEditModal();
-    }
-});
-
-// Parse CSV line handling quoted fields
-function parseCSVLine(line) {
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        
-        if (char === '"') {
-            if (inQuotes && line[i + 1] === '"') {
-                current += '"';
-                i++;
-            } else {
-                inQuotes = !inQuotes;
-            }
-        } else if (char === ',' && !inQuotes) {
-            result.push(current);
-            current = '';
-        } else {
-            current += char;
-        }
-    }
-    
-    result.push(current);
-    return result;
-}
-
 // Toggle info panel
 function toggleInfo() {
     const infoPanel = document.getElementById('infoPanel');
@@ -587,4 +569,4 @@ function toggleInfo() {
 console.log('🎯 Priority Sorter - Browser Storage Mode');
 console.log('📦 All data is stored locally in your browser');
 console.log('🔒 Your tasks are completely private');
-console.log(`📊 Current tasks: ${StorageManager.getTaskCount()}`);
+console.log(`📊 Active tasks: ${StorageManager.getTaskCount()}`);

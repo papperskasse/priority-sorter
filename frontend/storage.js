@@ -255,9 +255,32 @@ const StorageManager = {
         }
     },
 
+    // Mark a task as completed/uncompleted
+    toggleComplete: function(taskId) {
+        const tasks = this.loadTasks();
+        const index = tasks.findIndex(t => t.id === taskId);
+        
+        if (index !== -1) {
+            tasks[index].completed = !tasks[index].completed;
+            tasks[index].completed_at = tasks[index].completed ? new Date().toISOString() : null;
+            return this.saveTasks(tasks);
+        }
+        return false;
+    },
+
+    // Get only completed tasks
+    getCompletedTasks: function() {
+        return this.loadTasks().filter(t => t.completed);
+    },
+
+    // Get only active (non-completed) tasks
+    getActiveTasks: function() {
+        return this.loadTasks().filter(t => !t.completed);
+    },
+
     // Get task count
     getTaskCount: function() {
-        return this.loadTasks().length;
+        return this.getActiveTasks().length;
     },
 
     // Reorder tasks (for drag and drop within quadrant)

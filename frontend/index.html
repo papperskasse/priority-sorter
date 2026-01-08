@@ -18,8 +18,30 @@
         }
         .quadrant {
             min-height: 300px;
-            max-height: 70vh;
+            max-height: 75vh;
+            display: flex;
+            background-color: #f9fafb;
+        }
+        .quadrant-tasks {
+            width: 45%;
             overflow-y: auto;
+            border-right: 1px solid #e5e7eb;
+            padding: 0.75rem;
+        }
+        .quadrant-detail {
+            width: 55%;
+            overflow-y: auto;
+            padding: 0.75rem;
+            background-color: white;
+        }
+        .task-card.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        .task-card.completed h4 {
+            text-decoration: line-through;
+            color: #9ca3af;
         }
         .quadrant.drag-over {
             background-color: rgba(59, 130, 246, 0.1);
@@ -247,6 +269,13 @@
             <!-- Export/Import Controls -->
             <div class="border-t pt-4 flex flex-wrap gap-2">
                 <a 
+                    href="completed.html" 
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                    title="View finished tasks"
+                >
+                    ✅ Finished Tasks
+                </a>
+                <a 
                     href="timeline.html" 
                     class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
                     title="View tasks on timeline by deadline"
@@ -308,14 +337,15 @@
                 </div>
                 <div 
                     id="quadrant-1" 
-                    class="quadrant p-3 space-y-1.5" 
+                    class="quadrant" 
                     data-quadrant="1"
-                    ondrop="drop(event)" 
-                    ondragover="allowDrop(event)"
-                    ondragleave="dragLeave(event)"
-                    ondragenter="dragEnter(event)"
                 >
-                    <!-- Tasks will be added here -->
+                    <div class="quadrant-tasks space-y-1.5" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                        <!-- Tasks will be added here -->
+                    </div>
+                    <div id="detail-1" class="quadrant-detail">
+                        <p class="text-xs text-gray-400 italic text-center mt-4">Select a task to see breakdown</p>
+                    </div>
                 </div>
             </div>
 
@@ -327,14 +357,15 @@
                 </div>
                 <div 
                     id="quadrant-2" 
-                    class="quadrant p-3 space-y-1.5" 
+                    class="quadrant" 
                     data-quadrant="2"
-                    ondrop="drop(event)" 
-                    ondragover="allowDrop(event)"
-                    ondragleave="dragLeave(event)"
-                    ondragenter="dragEnter(event)"
                 >
-                    <!-- Tasks will be added here -->
+                    <div class="quadrant-tasks space-y-1.5" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                        <!-- Tasks will be added here -->
+                    </div>
+                    <div id="detail-2" class="quadrant-detail">
+                        <p class="text-xs text-gray-400 italic text-center mt-4">Select a task to see breakdown</p>
+                    </div>
                 </div>
             </div>
 
@@ -346,14 +377,15 @@
                 </div>
                 <div 
                     id="quadrant-3" 
-                    class="quadrant p-3 space-y-1.5" 
+                    class="quadrant" 
                     data-quadrant="3"
-                    ondrop="drop(event)" 
-                    ondragover="allowDrop(event)"
-                    ondragleave="dragLeave(event)"
-                    ondragenter="dragEnter(event)"
                 >
-                    <!-- Tasks will be added here -->
+                    <div class="quadrant-tasks space-y-1.5" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                        <!-- Tasks will be added here -->
+                    </div>
+                    <div id="detail-3" class="quadrant-detail">
+                        <p class="text-xs text-gray-400 italic text-center mt-4">Select a task to see breakdown</p>
+                    </div>
                 </div>
             </div>
 
@@ -365,14 +397,15 @@
                 </div>
                 <div 
                     id="quadrant-4" 
-                    class="quadrant p-3 space-y-1.5" 
+                    class="quadrant" 
                     data-quadrant="4"
-                    ondrop="drop(event)" 
-                    ondragover="allowDrop(event)"
-                    ondragleave="dragLeave(event)"
-                    ondragenter="dragEnter(event)"
                 >
-                    <!-- Tasks will be added here -->
+                    <div class="quadrant-tasks space-y-1.5" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                        <!-- Tasks will be added here -->
+                    </div>
+                    <div id="detail-4" class="quadrant-detail">
+                        <p class="text-xs text-gray-400 italic text-center mt-4">Select a task to see breakdown</p>
+                    </div>
                 </div>
             </div>
         </div>
