@@ -28,13 +28,27 @@ function setContext(context) {
 
 function dropOnContext(e, context) {
     e.preventDefault();
+    e.stopPropagation(); // Stop from bubbling to quadrant
+    
     const taskId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('taskId');
     if (!taskId) return;
 
     const task = StorageManager.getTask(taskId);
     if (task) {
+        // Update context but KEEP the same quadrant
         StorageManager.updateTask(taskId, { context: context });
         showNotification(`Task moved to ${context} list`, 'success');
+        
+        // Remove from current UI immediately
+        const card = document.querySelector(`[data-task-id="${taskId}"]`);
+        if (card) card.remove();
+        
+        // Clear selection if it was this task
+        if (selectedTaskId === taskId) {
+            closeDetailPane(task.quadrant);
+        }
+        
+        // Reload to ensure task count and logic are synced
         loadTasks();
     }
 }
