@@ -26,6 +26,19 @@ function setContext(context) {
     showNotification(`Switched to ${context} mode`, 'info');
 }
 
+function dropOnContext(e, context) {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('taskId');
+    if (!taskId) return;
+
+    const task = StorageManager.getTask(taskId);
+    if (task) {
+        StorageManager.updateTask(taskId, { context: context });
+        showNotification(`Task moved to ${context} list`, 'success');
+        loadTasks();
+    }
+}
+
 function updateContextUI() {
     const personalBtn = document.getElementById('ctx-personal');
     const professionalBtn = document.getElementById('ctx-professional');
@@ -228,7 +241,7 @@ function updateDetailPane(task) {
     // Quadrant Names
     const quadrantNames = {
         1: '🔴 Urgent & Important (Focus & Execute)',
-        2: '🟠 Urgent & Not Important (Minimize or Hand Off)',
+        2: '🟠 Urgent & Not Important (Delegate, Batch, Automate or Minimize)',
         3: '🔵 Not Urgent & Important (Strategize & Schedule)',
         4: '⚪ Not Urgent & Not Important (Put on Ice / Limit)'
     };
@@ -245,6 +258,21 @@ function updateDetailPane(task) {
             </div>
             <div class="flex-1 space-y-3 overflow-y-auto pr-1 custom-scrollbar">
     `;
+
+    // Add expanded action strategy for Q2
+    if (task.quadrant === 2) {
+        html += `
+            <div class="bg-orange-50 border-l-4 border-orange-400 p-2 mb-3">
+                <p class="text-[10px] font-bold text-orange-800 uppercase mb-1">💡 Strategy Guide</p>
+                <ul class="text-[10px] text-orange-700 space-y-1">
+                    <li>🤝 <strong>Delegate:</strong> Assign this to a team member.</li>
+                    <li>📦 <strong>Batch:</strong> Do all of these at once later today.</li>
+                    <li>🤖 <strong>Automate:</strong> Find a way to make this run itself.</li>
+                    <li>📉 <strong>Minimize:</strong> Use minimal effective effort.</li>
+                </ul>
+            </div>
+        `;
+    }
     
     if (task.notes.why) {
         html += `<div class="detail-section">
