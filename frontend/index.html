@@ -66,24 +66,44 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
     <!-- Header -->
-    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-6 px-4 shadow-lg">
-        <div class="container mx-auto">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-4xl font-bold mb-2">📊 Priority Sorter</h1>
-                    <p class="text-blue-100">Eisenhower Matrix - Organize Your Tasks by Urgency and Importance</p>
-                    <p class="text-xs text-blue-200 mt-1">🔒 All data stored locally in your browser - 100% private</p>
-                </div>
-                <div class="text-right">
-                    <div class="text-3xl font-bold"><span id="taskCount">0</span></div>
-                    <div class="text-sm text-blue-200">Total Tasks</div>
-                </div>
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-4 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold">📊 Priority Sorter</h1>
+                <p class="text-[10px] text-blue-100 uppercase tracking-widest leading-none">Personal & Professional Matrix</p>
+            </div>
+
+            <!-- Context Toggle -->
+            <div class="bg-white/20 backdrop-blur-md p-1 rounded-xl border border-white/30 flex gap-1">
+                <button 
+                    onclick="setContext('personal')" 
+                    id="ctx-personal"
+                    ondrop="dropOnContext(event, 'personal')"
+                    ondragover="allowDrop(event)"
+                    class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2"
+                >
+                    🏠 <span class="hidden sm:inline">Personal</span>
+                </button>
+                <button 
+                    onclick="setContext('professional')" 
+                    id="ctx-professional"
+                    ondrop="dropOnContext(event, 'professional')"
+                    ondragover="allowDrop(event)"
+                    class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2"
+                >
+                    💼 <span class="hidden sm:inline">Professional</span>
+                </button>
+            </div>
+
+            <div class="text-right hidden md:block">
+                <div class="text-xl font-bold"><span id="taskCount">0</span></div>
+                <div class="text-[10px] text-blue-100 uppercase tracking-widest leading-none">Active Tasks</div>
             </div>
         </div>
     </div>
 
     <!-- Main Container -->
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 py-6">
         <!-- Quick Tips Banner -->
         <div id="tipsBanner" class="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4 rounded-r-lg shadow-sm">
             <div class="flex items-start">
@@ -143,29 +163,6 @@
             </div>
         </div>
 
-        <!-- Context Toggle -->
-        <div class="flex justify-center mb-8">
-            <div class="bg-white p-1 rounded-xl shadow-md border border-gray-200 flex gap-1">
-                <button 
-                    onclick="setContext('personal')" 
-                    id="ctx-personal"
-                    ondrop="dropOnContext(event, 'personal')"
-                    ondragover="allowDrop(event)"
-                    class="px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2"
-                >
-                    🏠 Personal
-                </button>
-                <button 
-                    onclick="setContext('professional')" 
-                    id="ctx-professional"
-                    ondrop="dropOnContext(event, 'professional')"
-                    ondragover="allowDrop(event)"
-                    class="px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2"
-                >
-                    💼 Professional
-                </button>
-            </div>
-        </div>
         <!-- Info Panel -->
         <div id="infoPanel" class="hidden bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
             <div class="flex justify-between items-start mb-4">

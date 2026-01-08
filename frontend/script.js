@@ -58,11 +58,11 @@ function updateContextUI() {
     const professionalBtn = document.getElementById('ctx-professional');
     
     if (currentContext === 'personal') {
-        personalBtn.className = 'px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2 bg-blue-600 text-white shadow-inner';
-        professionalBtn.className = 'px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2 text-gray-500 hover:bg-gray-100';
+        personalBtn.className = 'px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 bg-white text-blue-600 shadow-lg scale-105';
+        professionalBtn.className = 'px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 text-white/70 hover:bg-white/10';
     } else {
-        professionalBtn.className = 'px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2 bg-purple-600 text-white shadow-inner';
-        personalBtn.className = 'px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2 text-gray-500 hover:bg-gray-100';
+        professionalBtn.className = 'px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 bg-white text-purple-600 shadow-lg scale-105';
+        personalBtn.className = 'px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 text-white/70 hover:bg-white/10';
     }
 }
 
@@ -445,8 +445,18 @@ function allowDrop(e) {
     e.dataTransfer.dropEffect = 'move';
     
     const quadrantTasks = e.currentTarget;
-    const quadrantContainer = quadrantTasks.closest('.quadrant');
     quadrantTasks.classList.add('drag-over');
+    
+    // Auto-scroll logic
+    const scrollSpeed = 10;
+    const threshold = 60;
+    const rect = quadrantTasks.getBoundingClientRect();
+    
+    if (e.clientY < rect.top + threshold) {
+        quadrantTasks.scrollTop -= scrollSpeed;
+    } else if (e.clientY > rect.bottom - threshold) {
+        quadrantTasks.scrollTop += scrollSpeed;
+    }
     
     const afterElement = getDragAfterElement(quadrantTasks, e.clientY);
     const dragging = document.querySelector('.dragging');
