@@ -1,9 +1,11 @@
 // State management
 let currentEditingTaskId = null;
 let selectedTaskId = null;
+let currentContext = localStorage.getItem('currentContext') || 'personal';
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
+    updateContextUI();
     loadTasks();
     setupEventListeners();
     updateTaskCount();
@@ -15,19 +17,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Setup event listeners
-function setupEventListeners() {
-    // Enter key to add task
-    document.getElementById('taskTitle').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            addTask();
-        }
-    });
+// Context Management
+function setContext(context) {
+    currentContext = context;
+    localStorage.setItem('currentContext', context);
+    updateContextUI();
+    loadTasks();
+    showNotification(`Switched to ${context} mode`, 'info');
+}
+
+function updateContextUI() {
+    const personalBtn = document.getElementById('ctx-personal');
+    const professionalBtn = document.getElementById('ctx-professional');
+    
+    if (currentContext === 'personal') {
+        personalBtn.className = 'px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2 bg-blue-600 text-white shadow-inner';
+        professionalBtn.className = 'px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2 text-gray-500 hover:bg-gray-100';
+    } else {
+        professionalBtn.className = 'px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2 bg-purple-600 text-white shadow-inner';
+        personalBtn.className = 'px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2 text-gray-500 hover:bg-gray-100';
+    }
 }
 
 // Load all tasks from localStorage
 function loadTasks() {
-    const tasks = StorageManager.getActiveTasks(); // Only non-completed
+    let tasks = StorageManager.getActiveTasks(); // Only non-completed
+    
+    // Filter by context - if task has no context, assume 'personal' for legacy support
+    tasks = tasks.filter(t => (t.context || 'personal') === currentContext);
     
     // Clear all quadrants
     for (let i = 1; i <= 4; i++) {
@@ -43,13 +60,18 @@ function loadTasks() {
         addTaskToDOM(task);
     });
     
-    // Re-select task if it still exists
+    // Re-select task if it still exists in this context
     if (selectedTaskId) {
         const task = StorageManager.getTask(selectedTaskId);
-        if (task && !task.completed) {
+        if (task && !task.completed && (task.context || 'personal') === currentContext) {
             highlightSelectedTask(selectedTaskId);
             updateDetailPane(task);
         } else {
+            // Clear detail panes if task is not in this context
+            for (let i = 1; i <= 4; i++) {
+                const dp = document.getElementById(`detail-${i}`);
+                if (dp) dp.innerHTML = '<p class="text-xs text-gray-400 italic text-center mt-4">Select a task to see breakdown</p>';
+            }
             selectedTaskId = null;
         }
     }
@@ -86,6 +108,7 @@ function addTask() {
         urgent: urgent,
         important: important,
         completed: false,
+        context: currentContext, // Add context to new task
         notes: {
             why: '',
             how: '',

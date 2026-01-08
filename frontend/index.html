@@ -109,7 +109,7 @@
         </div>
 
         <!-- Data Backup Warning Banner -->
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-lg shadow-sm">
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded-r-lg shadow-sm">
             <div class="flex items-start">
                 <div class="flex-shrink-0">
                     <span class="text-2xl">⚠️</span>
@@ -120,19 +120,16 @@
                     </h3>
                     <div class="text-sm text-yellow-700 space-y-1">
                         <p><strong>✅ Regular backups recommended:</strong> Export your tasks regularly using the buttons below.</p>
-                        <p><strong>🚨 Your tasks will be lost if you:</strong></p>
-                        <ul class="list-disc list-inside ml-2 space-y-0.5">
-                            <li>Clear browser cookies/site data</li>
-                            <li>Uninstall your browser</li>
-                            <li>Use incognito/private mode</li>
-                            <li>Switch to a different browser or device</li>
-                        </ul>
-                        <div class="mt-2 pt-2 border-t border-yellow-200">
-                            <p class="font-semibold">💡 Backup Options:</p>
-                            <ul class="list-disc list-inside ml-2">
-                                <li><strong>JSON Export</strong> (recommended): Perfect for backup - preserves everything (IDs, dates, order)</li>
-                                <li><strong>CSV Export</strong>: Good for viewing in Excel - <em>loses original IDs and dates when re-imported</em></li>
-                            </ul>
+                        <p><strong>🚨 Your tasks will be lost if you:</strong> Clear browser cookies/site data, use incognito mode, or switch devices.</p>
+                        <div class="mt-2 pt-2 border-t border-yellow-200 flex flex-wrap gap-4">
+                            <div class="flex-1 min-w-[200px]">
+                                <p class="font-bold text-[11px] uppercase tracking-wider text-yellow-600 mb-1">💡 What is JSON?</p>
+                                <p class="text-[11px] leading-relaxed italic">JSON (JavaScript Object Notation) is a "digital snapshot" of your tasks. Use it for 100% perfect backups and transfers between devices.</p>
+                            </div>
+                            <div class="flex-1 min-w-[200px]">
+                                <p class="font-bold text-[11px] uppercase tracking-wider text-yellow-600 mb-1">🤖 AI-Powered Migration</p>
+                                <p class="text-[11px] leading-relaxed italic">Have a list elsewhere? Export a dummy JSON here, upload it as a <strong>template</strong> to ChatGPT/Gemini with your old notes, and ask it to "Convert this list into my JSON format." Then import the result!</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -142,6 +139,26 @@
                     title="Dismiss warning"
                 >
                     ×
+                </button>
+            </div>
+        </div>
+
+        <!-- Context Toggle -->
+        <div class="flex justify-center mb-8">
+            <div class="bg-white p-1 rounded-xl shadow-md border border-gray-200 flex gap-1">
+                <button 
+                    onclick="setContext('personal')" 
+                    id="ctx-personal"
+                    class="px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2"
+                >
+                    🏠 Personal
+                </button>
+                <button 
+                    onclick="setContext('professional')" 
+                    id="ctx-professional"
+                    class="px-6 py-2 rounded-lg font-bold transition-all duration-200 flex items-center gap-2"
+                >
+                    💼 Professional
                 </button>
             </div>
         </div>
