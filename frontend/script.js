@@ -550,9 +550,9 @@ function saveTaskOrder() {
         taskMap[task.id] = task;
     });
     
-    const orderedTaskIds = [];
+    const currentContextTaskIds = [];
     
-    // Go through each quadrant in order and collect task IDs
+    // Go through each quadrant in order and collect task IDs for the CURRENT context
     for (let i = 1; i <= 4; i++) {
         const quadrant = document.getElementById(`quadrant-${i}`);
         if (!quadrant) continue;
@@ -560,18 +560,21 @@ function saveTaskOrder() {
         const taskCards = list.querySelectorAll('.task-card');
         
         taskCards.forEach(card => {
-            orderedTaskIds.push(card.dataset.taskId);
+            currentContextTaskIds.push(card.dataset.taskId);
         });
     }
     
-    // Include completed tasks that aren't in the matrix
+    // 1. Get the ordered tasks for the current context
+    const orderedActiveTasks = currentContextTaskIds.map(id => taskMap[id]).filter(Boolean);
+    
+    // 2. KEEP all tasks from OTHER contexts (so they don't disappear)
+    const otherContextTasks = allTasks.filter(t => !t.completed && (t.context || 'personal') !== currentContext);
+    
+    // 3. KEEP all completed tasks
     const completedTasks = allTasks.filter(t => t.completed);
     
-    // Reorder active tasks array based on DOM order
-    const orderedActiveTasks = orderedTaskIds.map(id => taskMap[id]).filter(Boolean);
-    
-    // Save both
-    StorageManager.saveTasks([...orderedActiveTasks, ...completedTasks]);
+    // Save the combined list
+    StorageManager.saveTasks([...orderedActiveTasks, ...otherContextTasks, ...completedTasks]);
 }
 
 // Export/Import Functions

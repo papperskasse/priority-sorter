@@ -142,6 +142,13 @@ const StorageManager = {
                 }
                 
                 let finalTasks;
+                
+                // Add current context to imported tasks that don't have one
+                const currentCtx = localStorage.getItem('currentContext') || 'personal';
+                importedTasks.forEach(t => {
+                    if (!t.context) t.context = currentCtx;
+                });
+
                 if (merge) {
                     // Merge with existing tasks
                     const existingTasks = StorageManager.loadTasks();
@@ -201,11 +208,13 @@ const StorageManager = {
                     else if (fields[0].includes('Schedule')) quadrant = 3;
                     else if (fields[0].includes('Eliminate')) quadrant = 4;
                     
+                    const currentCtx = localStorage.getItem('currentContext') || 'personal';
                     const task = {
                         id: 'task-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
                         title: fields[1] || 'Untitled Task',
                         urgent: fields[2] === 'Yes',
                         important: fields[3] === 'Yes',
+                        context: currentCtx, // Add context to CSV imports
                         notes: {
                             why: fields[4] || '',
                             how: fields[5] || '',
